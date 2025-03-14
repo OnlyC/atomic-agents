@@ -161,7 +161,7 @@ class BaseAgent:
         messages = [
             {
                 "role": "system",
-                "content": self.system_prompt_generator.generate_prompt(),
+                "content": await self.system_prompt_generator.generate_prompt(),
             }
         ] + self.memory.get_history()
 
@@ -205,6 +205,7 @@ class BaseAgent:
         Returns:
             BaseIOSchema: The response from the chat agent.
         """
+
         if user_input:
             self.memory.initialize_turn()
             self.current_user_input = user_input

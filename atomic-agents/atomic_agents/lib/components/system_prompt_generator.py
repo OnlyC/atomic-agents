@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import asyncio
 from typing import Dict, List, Optional
 
 
@@ -52,7 +53,12 @@ class SystemPromptGenerator:
         if self.context_providers:
             prompt_parts.append("# EXTRA INFORMATION AND CONTEXT")
             for provider in self.context_providers.values():
-                info = await provider.get_info()
+                info = None
+                if asyncio.iscoroutinefunction(provider.get_info):
+                    # If async, create a task directly
+                    info = await provider.get_info()
+                else:
+                    info = provider.get_info()
                 if info:
                     prompt_parts.append(f"## {provider.title}")
                     prompt_parts.append(info)
