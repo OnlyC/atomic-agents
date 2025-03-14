@@ -34,7 +34,7 @@ class SystemPromptGenerator:
             ]
         )
 
-    async def generate_prompt(self) -> str:
+    def generate_prompt(self) -> str:
         sections = [
             ("IDENTITY and PURPOSE", self.background),
             ("INTERNAL ASSISTANT STEPS", self.steps),
@@ -52,7 +52,7 @@ class SystemPromptGenerator:
         if self.context_providers:
             prompt_parts.append("# EXTRA INFORMATION AND CONTEXT")
             for provider in self.context_providers.values():
-                info = await provider.get_info()
+                info = provider.get_info()
                 if info:
                     prompt_parts.append(f"## {provider.title}")
                     prompt_parts.append(info)

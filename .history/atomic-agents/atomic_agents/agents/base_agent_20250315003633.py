@@ -1,4 +1,3 @@
-import logging
 import instructor
 from pydantic import BaseModel, Field
 from typing import Optional, Type
@@ -78,7 +77,6 @@ class BaseAgentConfig(BaseModel):
         description="Maximum number of token allowed in the response generation.",
     )
     model_api_parameters: Optional[dict] = Field(None, description="Additional parameters passed to the API provider.")
-    logger: Optional[any] = Field(None, description="Logger instance for logging.")
 
 
 class BaseAgent:
@@ -123,7 +121,6 @@ class BaseAgent:
         self.initial_memory = self.memory.copy()
         self.current_user_input = None
         self.model_api_parameters = config.model_api_parameters or {}
-        self.logger = config.logger or logging.getLogger(__name__)
         if config.temperature is not None:
             warnings.warn(
                 "'temperature' is deprecated and will soon be removed. Please use 'model_api_parameters' instead.",
@@ -144,7 +141,7 @@ class BaseAgent:
         """
         self.memory = self.initial_memory.copy()
 
-    async def get_response(self, response_model=None) -> Type[BaseModel]:
+    def get_response(self, response_model=None) -> Type[BaseModel]:
         """
         Obtains a response from the language model synchronously.
 
@@ -165,8 +162,7 @@ class BaseAgent:
             }
         ] + self.memory.get_history()
 
-        self.logger.info(f"Calling LLM: {messages}")
-        response = await self.client.chat.completions.create(
+        response = self.client.chat.completions.create(
             messages=messages,
             model=self.model,
             response_model=response_model,
@@ -202,18 +198,34 @@ class BaseAgent:
         Args:
             user_input (Optional[BaseIOSchema]): The input from the user. If not provided, skips adding to memory.
 
-        Returns:
-            BaseIOSchema: The response from the chat agent.
+        Yields:
+            BaseModel: Partial responses from the chat agent.
         """
         if user_input:
             self.memory.initialize_turn()
             self.current_user_input = user_input
             self.memory.add_message("user", user_input)
 
-        response = await self.get_response(response_model=self.output_schema)
-        self.memory.add_message("assistant", response)
+        messages = [
+            {
+                "role": "system",
+                "content": self.system_prompt_generator.generate_prompt(),
+            }
+        ] + self.memory.get_history()
 
-        return response
+        response_stream = self.client.chat.completions.create_partial(
+            model=self.model,
+            messages=messages,
+            response_model=self.output_schema,
+            **self.model_api_parameters,
+            stream=True,
+        )
+
+        async for partial_response in response_stream:
+            yield partial_response
+
+        full_response_content = self.output_schema(**partial_response.model_dump())
+        self.memory.add_message("assistant", full_response_content)
 
     async def stream_response_async(self, user_input: Optional[Type[BaseIOSchema]] = None):
         """

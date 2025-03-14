@@ -165,7 +165,6 @@ class BaseAgent:
             }
         ] + self.memory.get_history()
 
-        self.logger.info(f"Calling LLM: {messages}")
         response = await self.client.chat.completions.create(
             messages=messages,
             model=self.model,

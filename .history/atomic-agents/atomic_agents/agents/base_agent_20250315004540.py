@@ -1,4 +1,3 @@
-import logging
 import instructor
 from pydantic import BaseModel, Field
 from typing import Optional, Type
@@ -78,7 +77,7 @@ class BaseAgentConfig(BaseModel):
         description="Maximum number of token allowed in the response generation.",
     )
     model_api_parameters: Optional[dict] = Field(None, description="Additional parameters passed to the API provider.")
-    logger: Optional[any] = Field(None, description="Logger instance for logging.")
+    debug: bool = Field(False, description="Whether to enable debug mode.")
 
 
 class BaseAgent:
@@ -123,7 +122,6 @@ class BaseAgent:
         self.initial_memory = self.memory.copy()
         self.current_user_input = None
         self.model_api_parameters = config.model_api_parameters or {}
-        self.logger = config.logger or logging.getLogger(__name__)
         if config.temperature is not None:
             warnings.warn(
                 "'temperature' is deprecated and will soon be removed. Please use 'model_api_parameters' instead.",
@@ -165,7 +163,6 @@ class BaseAgent:
             }
         ] + self.memory.get_history()
 
-        self.logger.info(f"Calling LLM: {messages}")
         response = await self.client.chat.completions.create(
             messages=messages,
             model=self.model,
