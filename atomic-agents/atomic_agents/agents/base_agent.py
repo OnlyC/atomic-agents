@@ -1,7 +1,7 @@
 import logging
 import instructor
 from pydantic import BaseModel, Field
-from typing import Optional, Type
+from typing import Optional, Type, Any
 from atomic_agents.lib.components.agent_memory import AgentMemory
 from atomic_agents.lib.components.system_prompt_generator import (
     SystemPromptContextProviderBase,
@@ -12,6 +12,7 @@ from atomic_agents.lib.base.base_io_schema import BaseIOSchema
 from instructor.dsl.partial import PartialBase
 from jiter import from_json
 import warnings
+from logging import Logger
 
 
 def model_from_chunks_patched(cls, json_chunks, **kwargs):
@@ -78,7 +79,7 @@ class BaseAgentConfig(BaseModel):
         description="Maximum number of token allowed in the response generation.",
     )
     model_api_parameters: Optional[dict] = Field(None, description="Additional parameters passed to the API provider.")
-    logger: Optional[any] = Field(None, description="Logger instance for logging.")
+    logger: Optional[Any] = Field(None, description="Logger instance for logging.")
 
 
 class BaseAgent:
@@ -165,7 +166,9 @@ class BaseAgent:
             }
         ] + self.memory.get_history()
 
-        self.logger.info(f"Calling LLM: {messages}")
+        self.logger.info(
+            f"Calling LLM: \n{"\n".join([message['role'] + ': ' + message['content'] + '\n' for message in messages])}"
+        )
         response = await self.client.chat.completions.create(
             messages=messages,
             model=self.model,
