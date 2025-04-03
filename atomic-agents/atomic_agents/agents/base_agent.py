@@ -178,7 +178,7 @@ class BaseAgent:
 
         return response
 
-    def run(self, user_input: Optional[BaseIOSchema] = None) -> BaseIOSchema:
+    def run(self, user_input: Optional[BaseIOSchema] = None, add_message: bool = False) -> BaseIOSchema:
         """
         Runs the chat agent with the given user input synchronously.
 
@@ -191,14 +191,15 @@ class BaseAgent:
         if user_input:
             self.memory.initialize_turn()
             self.current_user_input = user_input
-            self.memory.add_message("user", user_input)
+            if add_message:
+                self.memory.add_message("user", user_input)
 
         response = self.get_response(response_model=self.output_schema)
         self.memory.add_message("assistant", response)
 
         return response
 
-    async def run_async(self, user_input: Optional[BaseIOSchema] = None):
+    async def run_async(self, user_input: Optional[BaseIOSchema] = None, add_message: bool = False):
         """
         Runs the chat agent with the given user input, supporting streaming output asynchronously.
 
@@ -212,7 +213,8 @@ class BaseAgent:
         if user_input:
             self.memory.initialize_turn()
             self.current_user_input = user_input
-            self.memory.add_message("user", user_input)
+            if add_message:
+                self.memory.add_message("user", user_input)
 
         response = await self.get_response(response_model=self.output_schema)
         self.memory.add_message("assistant", response)
