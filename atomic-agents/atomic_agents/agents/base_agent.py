@@ -44,7 +44,7 @@ class BaseAgentInputSchema(BaseIOSchema):
 
     chat_message: str = Field(
         ...,
-        description="The chat message sent by the user to the assistant.",
+        description="The chat message sent by the user to the agent.",
     )
 
 
@@ -61,6 +61,7 @@ class BaseAgentOutputSchema(BaseIOSchema):
 
 
 class BaseAgentConfig(BaseModel):
+    name: str = Field("base_agent", description="The name of the agent.")
     client: instructor.client.Instructor = Field(..., description="Client for interacting with the language model.")
     model: str = Field("gpt-4o-mini", description="The model to use for generating responses.")
     memory: Optional[AgentMemory] = Field(None, description="Memory component for storing chat history.")
@@ -105,6 +106,7 @@ class BaseAgent:
         model_api_parameters (dict): Additional parameters passed to the API provider.
     """
 
+    name = "base_agent"
     input_schema = BaseAgentInputSchema
     output_schema = BaseAgentOutputSchema
 
@@ -115,6 +117,7 @@ class BaseAgent:
         Args:
             config (BaseAgentConfig): Configuration for the chat agent.
         """
+        self.name = config.name or self.name
         self.input_schema = config.input_schema or self.input_schema
         self.output_schema = config.output_schema or self.output_schema
         self.client = config.client
@@ -195,7 +198,7 @@ class BaseAgent:
                 self.memory.add_message("user", user_input)
 
         response = self.get_response(response_model=self.output_schema)
-        self.memory.add_message("assistant", response)
+        self.memory.add_message(self.name, response)
 
         return response
 
@@ -217,7 +220,7 @@ class BaseAgent:
                 self.memory.add_message("user", user_input)
 
         response = await self.get_response(response_model=self.output_schema)
-        self.memory.add_message("assistant", response)
+        self.memory.add_message(self.name, response)
 
         return response
 
