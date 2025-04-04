@@ -199,7 +199,7 @@ class AgentMemory:
                 "turn_id": message.turn_id,
             }
             serialized_history.append(serialized_message)
-
+        print(serialized_history)
         memory_data = {
             "history": serialized_history,
             "max_messages": self.max_messages,
