@@ -89,7 +89,7 @@ class AgentMemory:
         history = []
         for message in self.history:
             content = message.content
-            message_content = content.model_dump()
+            message_content = content.model_dump(mode="json")
 
             images = []
             image_keys = []
@@ -194,7 +194,7 @@ class AgentMemory:
                 "role": message.role,
                 "content": {
                     "class_name": f"{content_class.__module__}.{content_class.__name__}",
-                    "data": message.content.model_dump(),
+                    "data": message.content.model_dump(mode="json"),
                 },
                 "turn_id": message.turn_id,
             }
@@ -341,7 +341,7 @@ if __name__ == "__main__":
         print(f"Turn ID: {message.turn_id}")
         print(f"Content type: {type(message.content).__name__}")
         print("Content:")
-        for field, value in message.content.model_dump().items():
+        for field, value in message.content.model_dump(mode="json").items():
             print(f"  {field}: {value}")
 
     # Final verification
@@ -350,4 +350,4 @@ if __name__ == "__main__":
     print(f"Current turn ID: {loaded_memory.get_current_turn_id()}")
     print("Last message content:")
     last_message = loaded_memory.history[-1]
-    print(last_message.content.model_dump())
+    print(last_message.content.model_dump(mode="json"))
