@@ -12,7 +12,6 @@ from atomic_agents.lib.base.base_io_schema import BaseIOSchema
 from instructor.dsl.partial import PartialBase
 from jiter import from_json
 import warnings
-from logging import Logger
 
 
 def model_from_chunks_patched(cls, json_chunks, **kwargs):
@@ -61,6 +60,7 @@ class BaseAgentOutputSchema(BaseIOSchema):
 
 
 class BaseAgentConfig(BaseModel):
+    name: str = Field("BaseAgent", description="The name of the agent.")
     client: instructor.client.Instructor = Field(..., description="Client for interacting with the language model.")
     model: str = Field("gpt-4o-mini", description="The model to use for generating responses.")
     memory: Optional[AgentMemory] = Field(None, description="Memory component for storing chat history.")
@@ -115,6 +115,7 @@ class BaseAgent:
         Args:
             config (BaseAgentConfig): Configuration for the chat agent.
         """
+        self.name = config.name
         self.input_schema = config.input_schema or self.input_schema
         self.output_schema = config.output_schema or self.output_schema
         self.client = config.client
@@ -166,7 +167,7 @@ class BaseAgent:
             }
         ] + self.memory.get_history()
 
-        self.logger.info(
+        self.logger.debug(
             f"Calling LLM: \n{"\n".join([message['role'] + ': ' + message['content'] + '\n' for message in messages])}"
         )
         response = await self.client.chat.completions.create(
@@ -195,7 +196,7 @@ class BaseAgent:
                 self.memory.add_message("user", user_input)
 
         response = self.get_response(response_model=self.output_schema)
-        self.memory.add_message("assistant", response)
+        self.memory.add_message("assistant", response, name=self.name)
 
         return response
 
@@ -217,7 +218,7 @@ class BaseAgent:
                 self.memory.add_message("user", user_input)
 
         response = await self.get_response(response_model=self.output_schema)
-        self.memory.add_message("assistant", response)
+        self.memory.add_message("assistant", response, name=self.name)
 
         return response
 

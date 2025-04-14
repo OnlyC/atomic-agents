@@ -18,6 +18,7 @@ class Message(BaseModel):
     role: str
     content: BaseIOSchema
     turn_id: Optional[str] = None
+    name: Optional[str] = None
 
 
 class AgentMemory:
@@ -52,6 +53,7 @@ class AgentMemory:
         self,
         role: str,
         content: BaseIOSchema,
+        name: Optional[str] = None,
     ) -> None:
         """
         Adds a message to the chat history and manages overflow.
@@ -67,6 +69,7 @@ class AgentMemory:
             role=role,
             content=content,
             turn_id=self.current_turn_id,
+            name=name,
         )
         self.history.append(message)
         self._manage_overflow()
@@ -90,7 +93,7 @@ class AgentMemory:
         for message in self.history:
             content = message.content
             message_content = content.model_dump(mode="json")
-
+            name = getattr(content, "name", "")
             images = []
             image_keys = []
 
@@ -121,7 +124,7 @@ class AgentMemory:
                 history.append({"role": message.role, "content": [json.dumps(message_content), *images]})
             else:
                 # For regular content, serialize to JSON string
-                history.append({"role": message.role, "content": json.dumps(content.model_dump(mode="json"))})
+                history.append({"role": message.role, "content": name + ": " + json.dumps(content.model_dump(mode="json"))})
         return history
 
     def copy(self) -> "AgentMemory":
@@ -199,7 +202,7 @@ class AgentMemory:
                 "turn_id": message.turn_id,
             }
             serialized_history.append(serialized_message)
-
+        print(serialized_history)
         memory_data = {
             "history": serialized_history,
             "max_messages": self.max_messages,
