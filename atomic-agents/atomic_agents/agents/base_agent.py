@@ -60,8 +60,8 @@ class BaseAgentOutputSchema(BaseIOSchema):
 
 
 class BaseAgentConfig(BaseModel):
-    name: str = Field("BaseAgent", description="The name of the agent.")
-    description: str = Field(..., description="A brief description of the agent.")
+    name: str = Field("base_agent", description="The name of the agent.")
+    description: str = Field("AI Agent in an orchestration", description="A brief description of the agent.")
     client: instructor.client.Instructor = Field(..., description="Client for interacting with the language model.")
     model: str = Field("gpt-4o-mini", description="The model to use for generating responses.")
     memory: Optional[AgentMemory] = Field(None, description="Memory component for storing chat history.")
