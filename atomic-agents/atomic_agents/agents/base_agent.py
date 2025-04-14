@@ -115,7 +115,8 @@ class BaseAgent:
         Args:
             config (BaseAgentConfig): Configuration for the chat agent.
         """
-        self.name = config.name
+        self.name = config.name or self.input_schema.model_json_schema()["title"]
+        self.description = config.description or self.input_schema.model_json_schema()["description"]
         self.input_schema = config.input_schema or self.input_schema
         self.output_schema = config.output_schema or self.output_schema
         self.client = config.client
